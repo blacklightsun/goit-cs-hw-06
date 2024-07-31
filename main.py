@@ -72,6 +72,7 @@ def socket_run(ip='localhost', port=5000):
     sock.bind(server)
 
     # Create a connection to the MongoDB
+    # uri = "mongodb://mongo:27018/"
     uri = "mongodb://localhost:27018/" #27017
     client = MongoClient(uri, server_api=ServerApi('1'))
     db = client.messages
@@ -92,8 +93,8 @@ def socket_run(ip='localhost', port=5000):
             data_dict = {key: value for key, value in [el.split('=') for el in data_parse.split('&')]}
             # print(data_dict)
             db.messages.insert_one(data_dict)
-    except:
-        print(f'Destroy server')
+    except Exception as e:
+        print(f'Destroy server. Error is {e}')
     finally:
         sock.close()
 
