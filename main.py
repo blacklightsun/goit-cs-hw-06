@@ -3,17 +3,23 @@ import pathlib
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import urllib.parse
 from datetime import datetime
+import socket
+from threading import Thread
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 
 class HttpHandler(BaseHTTPRequestHandler):
+
     def do_POST(self):
-        data = self.rfile.read(int(self.headers['Content-Length']))
-        date = datetime.now()
-        print(data)
-        data_parse = urllib.parse.unquote_plus(data.decode())
-        print(data_parse)
-        data_dict = {key: value for key, value in [el.split('=') for el in data_parse.split('&')]}
-        data_dict['date'] = str(date)
-        print(data_dict)
+        data = self.rfile.read(int(self.headers['Content-Length'])) + ('&date=' + str(datetime.now())).encode()
+
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            # todo: винести всі мережеві координати в файл параметрів
+            ip = 'localhost'
+            port = 5000
+            sock.connect((ip, port))
+            sock.sendto(data, (ip, port))
+
         self.send_response(302)
         self.send_header('Location', '/')
         self.end_headers()
@@ -49,8 +55,9 @@ class HttpHandler(BaseHTTPRequestHandler):
             self.wfile.write(file.read())
 
 
-def run(server_class=HTTPServer, handler_class=HttpHandler):
+def http_run(server_class=HTTPServer, handler_class=HttpHandler):
     server_address = ('', 3000)
+    # todo: винести всі мережеві координати в файл параметрів
     http = server_class(server_address, handler_class)
     try:
         http.serve_forever()
@@ -58,5 +65,41 @@ def run(server_class=HTTPServer, handler_class=HttpHandler):
         http.server_close()
 
 
+def socket_run(ip='localhost', port=5000):
+    # todo: винести всі мережеві координати в файл параметрів
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    server = ip, port
+    sock.bind(server)
+
+    # Create a connection to the MongoDB
+    uri = "mongodb://localhost:27018/" #27017
+    client = MongoClient(uri, server_api=ServerApi('1'))
+    db = client.messages
+
+    # Send a ping to confirm a successful connection
+    # try:
+    #     client.admin.command('ping')
+    #     print("Pinged your deployment. You successfully connected to MongoDB!\n")
+    # except Exception as e:
+    #     print(e)
+
+    try:
+        while True:
+            data, address = sock.recvfrom(1024)
+            # print(f'Received data: {data.decode()} from: {address}')
+            data_parse = urllib.parse.unquote_plus(data.decode())
+            # print(data_parse)
+            data_dict = {key: value for key, value in [el.split('=') for el in data_parse.split('&')]}
+            # print(data_dict)
+            db.messages.insert_one(data_dict)
+    except:
+        print(f'Destroy server')
+    finally:
+        sock.close()
+
+
 if __name__ == '__main__':
-    run()
+    http_thread = Thread(target=http_run)
+    socket_thread = Thread(target=socket_run)
+    socket_thread.start()
+    http_thread.start()

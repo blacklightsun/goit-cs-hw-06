@@ -1,0 +1,4 @@
+sudo docker run -p 27018:27017 -v /home/negan/PycharmProjects/goit-cs-hw-06/db:/data/db -d mongo
+
+sudo docker build --no-cache . -t blacklightsun888/cs-fp
+
