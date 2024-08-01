@@ -72,8 +72,8 @@ def socket_run(ip='localhost', port=5000):
     sock.bind(server)
 
     # Create a connection to the MongoDB
-    # uri = "mongodb://mongo:27018/"
-    uri = "mongodb://localhost:27018/" #27017
+    uri = "mongodb://mongo:27017/"
+    # uri = "mongodb://localhost:27017/" #27017
     client = MongoClient(uri, server_api=ServerApi('1'))
     db = client.messages
 

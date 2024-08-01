@@ -14,7 +14,7 @@ COPY . .
 RUN pip install -r requirements.txt
 
 # Позначимо порти, де працює застосунок всередині контейнера
-EXPOSE 3000 5000 27017 27018
+EXPOSE 3000 5000 27017
 
 # Запустимо наш застосунок всередині контейнера
 ENTRYPOINT ["python3", "main.py"]
